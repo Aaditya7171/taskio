@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "build": "tsc",
+    "build": "npm install --include=dev && tsc",
     "start": "node dist/server.js",
     "migrate": "ts-node src/scripts/migrate.ts",
     "prod:build": "NODE_ENV=production tsc",
@@ -48,9 +48,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.3",
     "redis": "^5.6.1",
-    "uuid": "^11.1.0"
-  },
-  "devDependencies": {
+    "uuid": "^11.1.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -59,8 +57,10 @@
     "@types/multer": "^1.4.13",
     "@types/node": "^20.10.4",
     "@types/pg": "^8.15.4",
-    "nodemon": "^3.0.2",
-    "ts-node": "^10.9.1",
     "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.1"
   }
 }
