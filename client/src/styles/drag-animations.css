@@ -1,0 +1,121 @@
+/* Smooth drag and drop animations */
+.drag-container {
+  will-change: transform;
+}
+
+.drag-item {
+  will-change: transform, opacity, box-shadow;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+.drag-item.dragging {
+  z-index: 9999;
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  opacity: 0.95;
+  transition: none !important;
+}
+
+.drag-item:not(.dragging) {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drag-item:hover:not(.dragging) {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.drag-item:active:not(.dragging) {
+  transform: translateY(0) scale(0.98);
+}
+
+.drop-zone {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drop-zone.drag-over {
+  transform: scale(1.02);
+  background-color: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.drag-handle {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drag-handle:hover {
+  transform: scale(1.1);
+  opacity: 1 !important;
+}
+
+.drag-handle:active {
+  transform: scale(0.95);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .drag-item.dragging {
+    transform: rotate(1deg) scale(1.03);
+    box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .drag-item:hover:not(.dragging) {
+    transform: translateY(-1px) scale(1.01);
+  }
+  
+  .drop-zone.drag-over {
+    transform: scale(1.01);
+  }
+}
+
+/* Smooth transitions for status changes */
+.status-transition {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Pulse animation for drop zones */
+@keyframes pulse-drop {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.drop-zone-pulse {
+  animation: pulse-drop 2s infinite;
+}
+
+/* Smooth fade in for new tasks */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Improved focus states for accessibility */
+.drag-item:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+.drag-handle:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
