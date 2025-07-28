@@ -2,52 +2,27 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { query } from '../config/database';
 import { ApiResponse, Attachment } from '../types';
-import multer from 'multer';
-import AWS from 'aws-sdk';
-import path from 'path';
+import { upload, uploadFile, deleteFile, getPublicIdFromUrl, getFileType } from '../services/uploadService';
 
-// Configure AWS S3
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
-});
+// Export upload middleware from uploadService
+export { upload };
 
-// Configure multer for file uploads
-const storage = multer.memoryStorage();
-export const upload = multer({
-  storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime',
-      'application/pdf'
-    ];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only images, videos, and PDFs are allowed.'));
-    }
+// Upload file to Cloudinary
+const uploadToCloudinary = async (file: Express.Multer.File, userId: string, taskId: string): Promise<{
+  url: string;
+  publicId: string;
+}> => {
+  const folder = `taskio/attachments/${userId}/${taskId}`;
+  const result = await uploadFile(file, folder);
+
+  if (!result.success) {
+    throw new Error(result.error || 'Upload failed');
   }
-});
 
-const uploadToS3 = async (file: Express.Multer.File, userId: string, taskId: string): Promise<string> => {
-  const fileExtension = path.extname(file.originalname);
-  const fileName = `${userId}/${taskId}/${Date.now()}${fileExtension}`;
-
-  const params = {
-    Bucket: process.env.AWS_S3_BUCKET!,
-    Key: fileName,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-    ACL: 'public-read'
+  return {
+    url: result.url!,
+    publicId: result.publicId!
   };
-
-  const result = await s3.upload(params).promise();
-  return result.Location;
 };
 
 export const uploadAttachment = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -79,27 +54,18 @@ export const uploadAttachment = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
-    // Upload file to S3
-    const fileUrl = await uploadToS3(req.file, userId, taskId);
+    // Upload file to Cloudinary
+    const uploadResult = await uploadToCloudinary(req.file, userId, taskId);
 
     // Determine file type
-    let fileType: 'image' | 'audio' | 'document' = 'document';
-    if (req.file.mimetype.startsWith('image/')) {
-      fileType = 'image';
-    } else if (req.file.mimetype.startsWith('video/')) {
-      fileType = 'document'; // Videos are treated as documents for now
-    } else if (req.file.mimetype.startsWith('audio/')) {
-      fileType = 'audio';
-    } else if (req.file.mimetype === 'application/pdf') {
-      fileType = 'document';
-    }
+    const fileType = getFileType(req.file.mimetype);
 
     // Save attachment record
     const result = await query(
       `INSERT INTO attachments (task_id, file_url, file_type, file_name, file_size)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [taskId, fileUrl, fileType, req.file.originalname, req.file.size]
+      [taskId, uploadResult.url, fileType, req.file.originalname, req.file.size]
     );
 
     res.status(201).json({
@@ -179,18 +145,15 @@ export const deleteAttachment = async (req: AuthRequest, res: Response): Promise
 
     const attachment = result.rows[0];
 
-    // Delete from S3
+    // Delete from Cloudinary
     try {
-      const urlParts = attachment.file_url.split('/');
-      const key = urlParts.slice(-3).join('/'); // Get the last 3 parts as the key
-      
-      await s3.deleteObject({
-        Bucket: process.env.AWS_S3_BUCKET!,
-        Key: key
-      }).promise();
-    } catch (s3Error) {
-      console.error('S3 deletion error:', s3Error);
-      // Continue with database deletion even if S3 deletion fails
+      const publicId = getPublicIdFromUrl(attachment.file_url);
+      if (publicId) {
+        await deleteFile(publicId);
+      }
+    } catch (cloudinaryError) {
+      console.error('Cloudinary deletion error:', cloudinaryError);
+      // Continue with database deletion even if Cloudinary deletion fails
     }
 
     // Delete from database

@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 import routes from './routes';
 // Redis temporarily disabled for production deployment
 // import { redisClient, connectRedis as initRedis } from './config/redis';
+import { testCloudinaryConnection } from './config/cloudinary';
 import {
   securityHeaders,
   generalRateLimit,
@@ -186,10 +187,18 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Taskio API server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 CORS enabled for: ${allowedOrigins.join(', ')}`);
+
+  // Test Cloudinary connection
+  const cloudinaryTest = await testCloudinaryConnection();
+  if (cloudinaryTest.success) {
+    console.log('☁️ Cloudinary connection successful');
+  } else {
+    console.error('❌ Cloudinary connection failed:', cloudinaryTest.error);
+  }
 });
 
 export default app;
