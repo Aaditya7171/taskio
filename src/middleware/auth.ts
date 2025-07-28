@@ -6,6 +6,7 @@ import { User } from '../types';
 export interface AuthRequest extends Request {
   user?: User;
   stackUser?: any;
+  file?: Express.Multer.File;
 }
 
 export const authenticateToken = async (
