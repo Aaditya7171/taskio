@@ -39,6 +39,7 @@ export default defineConfig({
       },
     },
     chunkSizeWarningLimit: 1000,
+    assetsInclude: ['**/*.ico'],
   },
   define: {
     global: 'globalThis',
