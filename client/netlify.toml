@@ -46,6 +46,24 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+[[headers]]
+  for = "/favicon*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "image/png"
+
+[[headers]]
+  for = "/favicon.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "image/x-icon"
+
+[[headers]]
+  for = "/favicon.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "image/svg+xml"
+
 # Environment-specific settings
 [context.production.environment]
   VITE_API_URL = "https://taskio-backend.onrender.com/api"
