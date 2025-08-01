@@ -42,7 +42,7 @@ export const authApi = {
 export const emailApi = {
   sendVerification: () => api.post<ApiResponse>('/email/send-verification'),
   verifyEmail: (otp: string) => api.post<ApiResponse>('/email/verify', { otp }),
-  updateTaskReminders: (enabled: boolean) => api.put<ApiResponse>('/email/task-reminders', { enabled }),
+  updateTaskReminders: (enabled: boolean) => api.post<ApiResponse>('/users/toggle-alerts', { enabled }),
   getStatus: () => api.get<ApiResponse<{ email_verified: boolean; task_reminders_enabled: boolean }>>('/email/status'),
 };
 

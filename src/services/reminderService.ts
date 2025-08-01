@@ -3,7 +3,7 @@ import { sendEmail } from './emailService';
 
 // Send welcome email when user enables alerts
 export const sendWelcomeAlertsEmail = async (email: string, name: string): Promise<void> => {
-  const subject = 'Welcome to Taskio Reminders! 🔔';
+  const subject = 'Task Reminders Activated - Welcome to Taskio Alerts';
   
   const htmlContent = `
     <!DOCTYPE html>
@@ -20,13 +20,15 @@ export const sendWelcomeAlertsEmail = async (email: string, name: string): Promi
         .footer { background: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; }
         .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 10px 0; }
         .feature { margin: 15px 0; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #667eea; }
+        .unsubscribe { color: #64748b; text-decoration: none; }
+        .unsubscribe:hover { color: #475569; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>🎉 Welcome to Taskio Reminders!</h1>
-          <p>Stay on top of your tasks with smart notifications</p>
+          <h1>Task Reminders Activated!</h1>
+          <p>Your productivity assistant is now active</p>
         </div>
         
         <div class="content">
@@ -65,9 +67,10 @@ export const sendWelcomeAlertsEmail = async (email: string, name: string): Promi
         </div>
         
         <div class="footer">
-          <p>This email was sent because you enabled task reminders in Taskio.</p>
+          <p>This email was sent because you enabled task reminders in your Taskio account.</p>
           <p>© 2025 Taskio. Built with ❤️ for productivity.</p>
           <p>Contact: <a href="mailto:verifytaskio@gmail.com">verifytaskio@gmail.com</a></p>
+          <p><a href="${process.env.FRONTEND_URL}/profile" class="unsubscribe">Manage email preferences</a> | <a href="${process.env.FRONTEND_URL}/profile" class="unsubscribe">Unsubscribe</a></p>
         </div>
       </div>
     </body>

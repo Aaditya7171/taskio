@@ -74,7 +74,7 @@ console.log('✅ SendGrid email service initialized for real email sending');
 
 const FROM_EMAIL = 'verifytaskio@gmail.com';
 
-// Generic email sending function
+// Generic email sending function with anti-spam headers
 export const sendEmail = async (
   to: string,
   subject: string,
@@ -82,7 +82,23 @@ export const sendEmail = async (
   textContent: string
 ): Promise<void> => {
   try {
-    await sendEmailViaSendGrid(to, subject, htmlContent, textContent);
+    console.log(`📧 Sending email to: ${to}`);
+    console.log(`📧 Subject: ${subject}`);
+
+    // Use the existing sendEmailViaSendGrid function with enhanced content
+    const enhancedHtmlContent = `
+      ${htmlContent}
+      <!-- Anti-spam headers -->
+      <div style="display: none;">
+        List-Unsubscribe: <${process.env.FRONTEND_URL}/profile>
+        X-Priority: 3
+        X-MSMail-Priority: Normal
+        Importance: Normal
+      </div>
+    `;
+
+    await sendEmailViaSendGrid(to, subject, enhancedHtmlContent, textContent);
+    console.log(`✅ Email successfully sent to ${to}`);
   } catch (error) {
     console.error('❌ Error sending email:', error);
     throw new Error('Failed to send email');

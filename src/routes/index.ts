@@ -6,6 +6,7 @@ import habitRoutes from './habits';
 import attachmentRoutes from './attachments';
 import journalRoutes from './journals';
 import ratingRoutes from './ratings';
+import testRoutes from './test';
 import analyticsRoutes from './analytics';
 import emailRoutes from './email';
 
@@ -30,6 +31,7 @@ router.use('/habits', habitRoutes);
 router.use('/attachments', attachmentRoutes);
 router.use('/journals', journalRoutes);
 router.use('/ratings', ratingRoutes);
+router.use('/test', testRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/email', emailRoutes);
 

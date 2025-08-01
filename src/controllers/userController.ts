@@ -267,12 +267,21 @@ export const toggleTaskAlerts = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
+    // Check if this is the first time enabling alerts
+    const currentUserResult = await query(
+      'SELECT alerts_enabled, alerts_activated_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const currentUser = currentUserResult.rows[0];
+    const isFirstTimeEnabling = enabled && !currentUser.alerts_enabled;
+
     // Update user's alerts preference
     const result = await query(
       `UPDATE users
        SET
          alerts_enabled = $1,
-         alerts_activated_at = CASE WHEN $1 = true THEN CURRENT_TIMESTAMP ELSE alerts_activated_at END,
+         alerts_activated_at = CASE WHEN $1 = true AND alerts_activated_at IS NULL THEN CURRENT_TIMESTAMP ELSE alerts_activated_at END,
          updated_at = CURRENT_TIMESTAMP
        WHERE id = $2
        RETURNING *`,
@@ -290,8 +299,9 @@ export const toggleTaskAlerts = async (req: AuthRequest, res: Response): Promise
     const user = result.rows[0];
 
     // Send welcome email if alerts are being enabled for the first time
-    if (enabled && user.alerts_activated_at) {
+    if (isFirstTimeEnabling) {
       try {
+        console.log(`📧 Sending welcome alerts email to ${user.email}...`);
         await sendWelcomeAlertsEmail(user.email, user.name);
         console.log(`✅ Welcome alerts email sent to ${user.email}`);
       } catch (emailError) {
