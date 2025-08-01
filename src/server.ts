@@ -48,7 +48,9 @@ app.use(session({
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:5174',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  'https://livetaskio.netlify.app',
+  'https://taskio-backend.onrender.com'
 ];
 
 app.use(cors({
@@ -57,18 +59,49 @@ app.use(cors({
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(origin)) {
+      console.log(`✅ CORS: Allowing origin: ${origin}`);
       return callback(null, true);
     }
 
-    return callback(new Error('Not allowed by CORS'));
+    console.log(`❌ CORS: Blocking origin: ${origin}`);
+    console.log(`📋 Allowed origins: ${allowedOrigins.join(', ')}`);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-CSRF-Token',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
   exposedHeaders: ['Access-Control-Allow-Origin', 'Access-Control-Allow-Credentials'],
   preflightContinue: false,
   optionsSuccessStatus: 200
 }));
+
+// Additional CORS headers for production
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
 
 // Security middleware
 app.use(securityHeaders);
