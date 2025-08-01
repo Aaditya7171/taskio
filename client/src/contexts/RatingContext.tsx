@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import api from '@/utils/api';
 
 interface RatingContextType {
   averageRating: number;
@@ -21,37 +22,44 @@ interface RatingProviderProps {
 }
 
 export const RatingProvider: React.FC<RatingProviderProps> = ({ children }) => {
-  const [ratings, setRatings] = useState<number[]>(() => {
-    const savedRatings = localStorage.getItem('taskio-ratings');
-    return savedRatings ? JSON.parse(savedRatings) : [];
-  });
-
   const [averageRating, setAverageRating] = useState<number>(0);
   const [totalRatings, setTotalRatings] = useState<number>(0);
 
-  // Calculate average rating whenever ratings change
-  useEffect(() => {
-    if (ratings.length === 0) {
-      setAverageRating(0);
-      setTotalRatings(0);
-      return;
+  // Fetch rating stats from backend
+  const fetchRatingStats = async () => {
+    try {
+      const response = await api.get('/ratings/stats');
+      if (response.data.success) {
+        setAverageRating(response.data.data.averageRating);
+        setTotalRatings(response.data.data.totalRatings);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rating stats:', error);
     }
+  };
 
-    const sum = ratings.reduce((acc, rating) => acc + rating, 0);
-    setAverageRating(sum / ratings.length);
-    setTotalRatings(ratings.length);
+  // Load rating stats on mount
+  useEffect(() => {
+    fetchRatingStats();
+  }, []);
 
-    // Save to localStorage
-    localStorage.setItem('taskio-ratings', JSON.stringify(ratings));
-  }, [ratings]);
-
-  const addRating = (rating: number) => {
+  const addRating = async (rating: number) => {
     if (rating < 1 || rating > 5) {
       console.error('Rating must be between 1 and 5');
       return;
     }
-    
-    setRatings(prevRatings => [...prevRatings, rating]);
+
+    try {
+      const response = await api.post('/ratings', { rating });
+      if (response.data.success) {
+        // Update local state with new stats
+        setAverageRating(response.data.data.averageRating);
+        setTotalRatings(response.data.data.totalRatings);
+      }
+    } catch (error) {
+      console.error('Failed to submit rating:', error);
+      throw error;
+    }
   };
 
   const value: RatingContextType = {

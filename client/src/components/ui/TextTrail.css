@@ -3,9 +3,27 @@
   height: 100%;
   position: relative;
   overflow: hidden;
-  min-height: 200px;
+  min-height: 120px;
   filter: drop-shadow(0 0 8px rgba(177, 156, 217, 0.5));
   transition: filter 0.3s ease;
+}
+
+@media (min-width: 640px) {
+  .text-trail {
+    min-height: 160px;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-trail {
+    min-height: 180px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-trail {
+    min-height: 200px;
+  }
 }
 
 .text-trail:hover {
@@ -33,5 +51,23 @@
   display: block;
   width: 100% !important;
   height: 100% !important;
-  min-height: 200px;
+  min-height: 120px;
+}
+
+@media (min-width: 640px) {
+  .text-trail canvas {
+    min-height: 160px;
+  }
+}
+
+@media (min-width: 768px) {
+  .text-trail canvas {
+    min-height: 180px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-trail canvas {
+    min-height: 200px;
+  }
 }

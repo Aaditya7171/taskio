@@ -74,6 +74,21 @@ console.log('✅ SendGrid email service initialized for real email sending');
 
 const FROM_EMAIL = 'verifytaskio@gmail.com';
 
+// Generic email sending function
+export const sendEmail = async (
+  to: string,
+  subject: string,
+  htmlContent: string,
+  textContent: string
+): Promise<void> => {
+  try {
+    await sendEmailViaSendGrid(to, subject, htmlContent, textContent);
+  } catch (error) {
+    console.error('❌ Error sending email:', error);
+    throw new Error('Failed to send email');
+  }
+};
+
 export const sendVerificationEmail = async (email: string, otp: string, name: string): Promise<void> => {
   const msg = {
     to: email,

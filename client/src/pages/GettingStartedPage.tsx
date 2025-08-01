@@ -157,7 +157,7 @@ const GettingStartedPage: React.FC = () => {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="flex items-center justify-center mb-8"
           >
-            <div className="w-full max-w-4xl h-56">
+            <div className="w-full max-w-4xl h-32 sm:h-40 md:h-48 lg:h-56">
               <TextTrail
                 text="Taskio"
                 fontFamily="Figtree"

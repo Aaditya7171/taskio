@@ -55,6 +55,7 @@ const ProfilePage: React.FC = () => {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [isToggling2FA, setIsToggling2FA] = useState(false);
   const [isUpdatingReminders, setIsUpdatingReminders] = useState(false);
+  const [profilePictureChanged, setProfilePictureChanged] = useState(false);
 
   const {
     register,
@@ -101,6 +102,7 @@ const ProfilePage: React.FC = () => {
         // Update user context with new data
         updateUser(response.data.data);
         setIsEditing(false);
+        setProfilePictureChanged(false);
         toast.success('Profile updated successfully!');
 
         // Reset form with new values
@@ -188,6 +190,7 @@ const ProfilePage: React.FC = () => {
       if (response.data.success) {
         // Update user context with new profile picture URL
         updateUser({ profile_picture_url: response.data.data.profile_picture_url });
+        setProfilePictureChanged(true);
         toast.success('Profile picture updated successfully!');
       }
 
@@ -474,7 +477,7 @@ const ProfilePage: React.FC = () => {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={!isDirty}
+                        disabled={!isDirty && !profilePictureChanged}
                       >
                         <Save className="w-4 h-4 mr-2" />
                         Save Changes

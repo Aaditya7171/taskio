@@ -487,7 +487,7 @@ const TextTrail: React.FC<TextTrailProps> = ({
 
         {/* Normal text without gradient */}
         <h1
-          className="relative text-6xl font-black z-10"
+          className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black z-10"
           style={{
             fontFamily,
             fontWeight,

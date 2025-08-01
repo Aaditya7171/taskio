@@ -9,7 +9,9 @@ import {
   getUserStats,
   uploadProfilePicture,
   changePassword,
-  toggle2FA
+  toggle2FA,
+  toggleTaskAlerts,
+  getAlertPreferences
 } from '../controllers/userController';
 
 const router = Router();
@@ -52,5 +54,11 @@ router.post('/change-password', changePassword);
 
 // POST /api/users/toggle-2fa - Toggle two-factor authentication
 router.post('/toggle-2fa', toggle2FA);
+
+// GET /api/users/alert-preferences - Get user's alert preferences
+router.get('/alert-preferences', getAlertPreferences);
+
+// POST /api/users/toggle-alerts - Toggle task alerts/reminders
+router.post('/toggle-alerts', toggleTaskAlerts);
 
 export default router;

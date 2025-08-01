@@ -9,6 +9,7 @@ import routes from './routes';
 // Redis temporarily disabled for production deployment
 // import { redisClient, connectRedis as initRedis } from './config/redis';
 import { testCloudinaryConnection } from './config/cloudinary';
+import { initializeTaskReminderScheduler } from './services/schedulerService';
 import {
   securityHeaders,
   generalRateLimit,
@@ -199,6 +200,9 @@ app.listen(PORT, async () => {
   } else {
     console.error('❌ Cloudinary connection failed:', cloudinaryTest.error);
   }
+
+  // Initialize task reminder scheduler
+  initializeTaskReminderScheduler();
 });
 
 export default app;

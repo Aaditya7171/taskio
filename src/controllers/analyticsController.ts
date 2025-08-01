@@ -8,20 +8,20 @@ export const getProductivityInsights = async (req: AuthRequest, res: Response): 
     const userId = req.user!.id;
     const { days = 30 } = req.query;
 
-    // Daily task completion over the specified period
+    // Daily task completion over the specified period (using current timestamp)
     const dailyStats = await query(
-      `SELECT 
-        DATE(created_at) as date,
+      `SELECT
+        DATE(created_at AT TIME ZONE 'UTC') as date,
         COUNT(*) as total_tasks,
         COUNT(CASE WHEN status = 'done' THEN 1 END) as completed_tasks,
         ROUND(
-          COUNT(CASE WHEN status = 'done' THEN 1 END) * 100.0 / COUNT(*), 
+          COUNT(CASE WHEN status = 'done' THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0),
           2
         ) as completion_rate
-       FROM tasks 
-       WHERE user_id = $1 
-         AND created_at >= CURRENT_DATE - INTERVAL '${days} days'
-       GROUP BY DATE(created_at)
+       FROM tasks
+       WHERE user_id = $1
+         AND created_at >= NOW() - INTERVAL '${days} days'
+       GROUP BY DATE(created_at AT TIME ZONE 'UTC')
        ORDER BY date DESC`,
       [userId]
     );
@@ -49,18 +49,17 @@ export const getProductivityInsights = async (req: AuthRequest, res: Response): 
       [userId]
     );
 
-    // Most productive hours (based on task completion times)
+    // Most productive hours (based on task completion times with current timezone)
     const hourlyStats = await query(
-      `SELECT 
-        EXTRACT(HOUR FROM updated_at) as hour,
+      `SELECT
+        EXTRACT(HOUR FROM updated_at AT TIME ZONE 'UTC') as hour,
         COUNT(*) as completed_tasks
-       FROM tasks 
-       WHERE user_id = $1 
+       FROM tasks
+       WHERE user_id = $1
          AND status = 'done'
-         AND updated_at >= CURRENT_DATE - INTERVAL '${days} days'
-       GROUP BY EXTRACT(HOUR FROM updated_at)
-       ORDER BY completed_tasks DESC
-       LIMIT 5`,
+         AND updated_at >= NOW() - INTERVAL '${days} days'
+       GROUP BY EXTRACT(HOUR FROM updated_at AT TIME ZONE 'UTC')
+       ORDER BY hour ASC`,
       [userId]
     );
 

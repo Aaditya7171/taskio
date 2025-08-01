@@ -6,6 +6,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
+import { uploadFile } from '../services/uploadService';
+import { sendWelcomeAlertsEmail } from '../services/reminderService';
 
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -207,32 +209,25 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'profile-pictures');
-    try {
-      await fs.access(uploadsDir);
-    } catch {
-      await fs.mkdir(uploadsDir, { recursive: true });
+    // Upload to Cloudinary
+    const folder = `taskio/profile-pictures/${userId}`;
+    const result = await uploadFile(file, folder);
+
+    if (!result.success) {
+      res.status(500).json({
+        success: false,
+        error: result.error || 'Failed to upload profile picture'
+      } as ApiResponse);
+      return;
     }
 
-    // Generate unique filename
-    const fileExtension = path.extname(file.originalname);
-    const fileName = `${uuidv4()}${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
-
-    // Save file to disk
-    await fs.writeFile(filePath, file.buffer);
-
-    // Generate URL for the uploaded file
-    const profilePictureUrl = `/uploads/profile-pictures/${fileName}`;
-
     // Update user's profile picture URL in database
-    const result = await query(
+    const dbResult = await query(
       'UPDATE users SET profile_picture_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
-      [profilePictureUrl, userId]
+      [result.url, userId]
     );
 
-    if (result.rows.length === 0) {
+    if (dbResult.rows.length === 0) {
       res.status(404).json({
         success: false,
         error: 'User not found'
@@ -243,8 +238,8 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
     res.json({
       success: true,
       data: {
-        profile_picture_url: profilePictureUrl,
-        user: result.rows[0]
+        profile_picture_url: result.url,
+        user: dbResult.rows[0]
       },
       message: 'Profile picture uploaded successfully'
     } as ApiResponse);
@@ -254,6 +249,103 @@ export const uploadProfilePicture = async (req: AuthRequest, res: Response): Pro
     res.status(500).json({
       success: false,
       error: 'Failed to upload profile picture'
+    } as ApiResponse);
+  }
+};
+
+// Toggle task alerts/reminders
+export const toggleTaskAlerts = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+    const { enabled } = req.body;
+
+    if (typeof enabled !== 'boolean') {
+      res.status(400).json({
+        success: false,
+        error: 'enabled field must be a boolean'
+      } as ApiResponse);
+      return;
+    }
+
+    // Update user's alerts preference
+    const result = await query(
+      `UPDATE users
+       SET
+         alerts_enabled = $1,
+         alerts_activated_at = CASE WHEN $1 = true THEN CURRENT_TIMESTAMP ELSE alerts_activated_at END,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING *`,
+      [enabled, userId]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found'
+      } as ApiResponse);
+      return;
+    }
+
+    const user = result.rows[0];
+
+    // Send welcome email if alerts are being enabled for the first time
+    if (enabled && user.alerts_activated_at) {
+      try {
+        await sendWelcomeAlertsEmail(user.email, user.name);
+        console.log(`✅ Welcome alerts email sent to ${user.email}`);
+      } catch (emailError) {
+        console.error('❌ Failed to send welcome alerts email:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        alerts_enabled: user.alerts_enabled,
+        alerts_activated_at: user.alerts_activated_at
+      },
+      message: enabled ? 'Task alerts enabled successfully' : 'Task alerts disabled successfully'
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Toggle task alerts error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to toggle task alerts'
+    } as ApiResponse);
+  }
+};
+
+// Get user's alert preferences
+export const getAlertPreferences = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.id;
+
+    const result = await query(
+      'SELECT alerts_enabled, alerts_activated_at FROM users WHERE id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        error: 'User not found'
+      } as ApiResponse);
+      return;
+    }
+
+    const preferences = result.rows[0];
+
+    res.json({
+      success: true,
+      data: preferences
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get alert preferences error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get alert preferences'
     } as ApiResponse);
   }
 };
